@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/skorea.png</file>
+	<file>images/skorea_without_water.png</file>
+    </qresource>
+</RCC>
