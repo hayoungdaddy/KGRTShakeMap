@@ -25,19 +25,26 @@ void RecvMessage::onConnected()
 
 void RecvMessage::onBinaryMessageReceived(QByteArray data)
 {
-    if(data.length() > 1000)
+    if(data.length() > 500000) // _BINARY_POINT_PACKET
     {
         _BINARY_POINT_PACKET myp;
         memcpy(&myp, data.data(), sizeof(_BINARY_POINT_PACKET));
 
         emit(sendPOINTSMessageToMainWindow(myp));
     }
-    else
+    else if (data.length() < 1000) // _BINARY_EEW_PACKET
     {
         _BINARY_EEW_PACKET myp;
         memcpy(&myp, data.data(), sizeof(_BINARY_EEW_PACKET));
 
         emit(sendEEWMessageToMainWindow(myp));
+    }
+    else if (data.length() > 10000 && data.length() < 15000)
+    {
+        _BINARY_STATION_PACKET myp;
+        memcpy(&myp, data.data(), sizeof(_BINARY_STATION_PACKET));
+
+        emit(sendSTATIONMessageToMainWindow(myp));
     }
 }
 
@@ -56,4 +63,21 @@ void RecvMessage::cleanUp()
 void RecvMessage::sendTextMessage(QString dataTime)
 {
     m_webSocket.sendTextMessage(dataTime);
+}
+
+void RecvMessage::sendTextIncludeOptionMessage(QString dataTime)
+{
+    QString message;
+    message = QString::number(chanID) + "_" + dataTime + "_" + QString::number(dataType);
+    m_webSocket.sendTextMessage(message);
+}
+
+void RecvMessage::setChanID(int id)
+{
+    chanID = id;
+}
+
+void RecvMessage::setDataType(int type)
+{
+    dataType = type;
 }

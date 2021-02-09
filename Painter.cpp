@@ -81,9 +81,28 @@ void Painter::initPoints()
     }
 }
 
-void Painter::paint(QPainter *painter, QPaintEvent *event, _BINARY_EEW_PACKET myeewp, _BINARY_POINT_PACKET mypoint)
+void Painter::paint(QPainter *painter, QPaintEvent *event,
+                    _BINARY_EEW_PACKET myeewp, _BINARY_POINT_PACKET mypoint, _BINARY_STATION_PACKET mystation)
 {
+    QString chanS;
+    if(chanID == 0) chanS = "East/West Channel";
+    else if(chanID == 1) chanS = "North/South Channel";
+    else if(chanID == 2) chanS = "Up/Down Channel";
+    else if(chanID == 3) chanS = "Horizontal Channel";
+    else if(chanID == 4) chanS = "Total(3D) Channel";
+
     isEvent = false;
+
+    if(legendType == 0)
+    {
+        backImage.load(":/images/skorea.png");
+        backImage = backImage.scaled(IMAGE_X_WIDTH, IMAGE_Y_HEIGHT, Qt::KeepAspectRatio);
+    }
+    else if(legendType == 1)
+    {
+        backImage.load(":/images/skorea_without_water.png");
+        backImage = backImage.scaled(IMAGE_X_WIDTH, IMAGE_Y_HEIGHT, Qt::KeepAspectRatio);
+    }
 
     painter->fillRect(event->rect(), backImage);
     painter->save();
@@ -94,43 +113,109 @@ void Painter::paint(QPainter *painter, QPaintEvent *event, _BINARY_EEW_PACKET my
         {
             _event = myeewp.eventlist[i];
 
-            if(mypoint.dataTime >= _event.eventEpochStartTime &&
-                    mypoint.dataTime < _event.eventEpochStartTime + EVENT_DURATION)
+            if(dataType == 0)
             {
-                isEvent = true;
-                break;
+                if(mypoint.dataTime >= _event.eventEpochStartTime &&
+                        mypoint.dataTime < _event.eventEpochStartTime + EVENT_DURATION)
+                {
+                    isEvent = true;
+                    break;
+                }
+            }
+            else if(dataType == 1)
+            {
+                if(mystation.dataTime >= _event.eventEpochStartTime &&
+                        mystation.dataTime < _event.eventEpochStartTime + EVENT_DURATION)
+                {
+                    isEvent = true;
+                    break;
+                }
             }
         }
     }
 
-
     if(isEvent)
     {
-        // if maxPGAList is empty then insert staList into maxPGAList
-        if(maxMapZ.isEmpty())
+        if(dataType == 0)
         {
-            for(int i=0;i<LANDXYCNT;i++)
+            // if maxPGAList is empty then insert staList into maxPGAList
+            if(maxMapZ.isEmpty())
             {
-                maxMapZ.append(mypoint.mapZ[i]);
+                for(int i=0;i<LANDXYCNT;i++)
+                {
+                    maxMapZ.append(mypoint.mapZ[i]);
+                }
             }
-        }
-        else
-        {
-            for(int i=0;i<LANDXYCNT;i++)
+            else
             {
-                if(mypoint.mapZ[i] >= maxMapZ.at(i))
-                    maxMapZ.replace(i, mypoint.mapZ[i]);
+                for(int i=0;i<LANDXYCNT;i++)
+                {
+                    if(mypoint.mapZ[i] >= maxMapZ.at(i))
+                        maxMapZ.replace(i, mypoint.mapZ[i]);
+                }
             }
-        }
 
-        for(int i=0;i<LANDXYCNT;i++)
+            for(int i=0;i<LANDXYCNT;i++)
+            {
+                QColor col;
+                float value = maxMapZ.at(i);
+                if(legendType == 0)
+                    col.setRgb(redColor(value), greenColor(value), blueColor(value));
+                else if(legendType == 1)
+                    col = getGradientColorfromGal(value);
+                QPen pen = QPen(col);
+                painter->setPen(pen);
+                painter->drawPoint(QPoint(points.at(i).landX, points.at(i).landY));
+            }
+        }
+        else if(dataType == 1)
         {
-            QColor col;
-            float value = maxMapZ.at(i);
-            col.setRgb(redColor(value), greenColor(value), blueColor(value));
-            QPen pen = QPen(col);
-            painter->setPen(pen);
-            painter->drawPoint(QPoint(points.at(i).landX, points.at(i).landY));
+            // if maxPGAList is empty then insert staList into maxPGAList
+            if(maxPGAList.isEmpty())
+            {
+                for(int i=0;i<mystation.numPGAsta;i++)
+                {
+                    _STATION sta = mystation.staList[i];
+                    maxPGAList.append(sta);
+                }
+            }
+            else
+            {
+                for(int i=0;i<mystation.numPGAsta;i++)
+                {
+                    _STATION sta = mystation.staList[i];
+                    bool needInsert = true;
+                    for(int j=0;j<maxPGAList.size();j++)
+                    {
+                        _STATION maxsta = maxPGAList.at(j);
+                        if(sta.index == maxsta.index)
+                        {
+                            if(sta.pga > maxsta.pga) maxsta.pga = sta.pga;
+
+                            needInsert = false;
+                            maxPGAList.replace(j, maxsta);
+                            break;
+                        }
+                    }
+                    if(needInsert)
+                        maxPGAList.append(sta);
+                }
+            }
+
+            // draw max pga
+            for(int i=0;i<maxPGAList.size();i++)
+            {
+                _STATION sta = maxPGAList.at(i);
+                QColor col;
+                if(legendType == 0)
+                    col.setRgb(redColor(sta.pga), greenColor(sta.pga), blueColor(sta.pga));
+                else if(legendType == 1)
+                    col = getGradientColorfromGal(sta.pga);
+                //col.setRgb(redColor(sta.pga), greenColor(sta.pga), blueColor(sta.pga));
+                QBrush brush = QBrush(col);
+                painter->setBrush(brush);
+                painter->drawEllipse(QPoint(sta.mapX, sta.mapY), 5, 5);
+            }
         }
 
         // draw epicenter
@@ -143,7 +228,12 @@ void Painter::paint(QPainter *painter, QPaintEvent *event, _BINARY_EEW_PACKET my
         painter->setFont(epiFont);
         painter->drawText(QRect(_event.mapX - 25, _event.mapY + 5, 50, 30), Qt::AlignCenter, "M" + QString::number(_event.mag, 'f', 1));
 
-        int eqFlowTimeSec = mypoint.dataTime - _event.eventEpochStartTime;
+        int eqFlowTimeSec;
+
+        if(dataType == 0)
+            eqFlowTimeSec = mypoint.dataTime - _event.eventEpochStartTime;
+        else if(dataType == 1)
+            eqFlowTimeSec = mystation.dataTime - _event.eventEpochStartTime;
 
         qreal radiusP = eqFlowTimeSec * P_VEL;
         qreal radiusS = eqFlowTimeSec * S_VEL;
@@ -160,31 +250,55 @@ void Painter::paint(QPainter *painter, QPaintEvent *event, _BINARY_EEW_PACKET my
         et.setTimeSpec(Qt::UTC);
         et.setTime_t(_event.eventEpochStartTime);
 
-        painter->drawText(QRect(500, 85, 300, 20), Qt::AlignRight, "EEW ID:" + QString::number(_event.evid));
-        painter->drawText(QRect(500, 105, 300, 20), Qt::AlignRight, et.toString("yyyy-MM-dd hh:mm:ss") + " (UTC)");
-        painter->drawText(QRect(500, 125, 300, 20), Qt::AlignRight, "M" + QString::number(_event.mag, 'f', 1));
+        painter->drawText(QRect(500, 95, 300, 25), Qt::AlignRight, "EEW ID:" + QString::number(_event.evid));
+        painter->drawText(QRect(500, 120, 300, 25), Qt::AlignRight, et.toString("yyyy-MM-dd hh:mm:ss") + " (UTC)");
+        painter->drawText(QRect(500, 145, 300, 25), Qt::AlignRight, "M" + QString::number(_event.mag, 'f', 1));
 
     }
     else
     {
         maxMapZ.clear();
+        maxPGAList.clear();
 
-        for(int i=0;i<LANDXYCNT;i++)
+        if(dataType == 0)
         {
-            QColor col;
-            col.setRgb(redColor(mypoint.mapZ[i]), greenColor(mypoint.mapZ[i]), blueColor(mypoint.mapZ[i]));
-            QPen pen = QPen(col);
-            painter->setPen(pen);
-            painter->drawPoint(QPoint(points.at(i).landX, points.at(i).landY));
+            for(int i=0;i<LANDXYCNT;i++)
+            {
+                QColor col;
+                if(legendType == 0)
+                    col.setRgb(redColor(mypoint.mapZ[i]), greenColor(mypoint.mapZ[i]), blueColor(mypoint.mapZ[i]));
+                else if(legendType == 1)
+                    col = getGradientColorfromGal(mypoint.mapZ[i]);
+                //col.setRgb(redColor(mypoint.mapZ[i]), greenColor(mypoint.mapZ[i]), blueColor(mypoint.mapZ[i]));
+                QPen pen = QPen(col);
+                painter->setPen(pen);
+                painter->drawPoint(QPoint(points.at(i).landX, points.at(i).landY));
+            }
+        }
+        else if(dataType == 1)
+        {
+            for(int i=0;i<mystation.numPGAsta;i++)
+            {
+                _STATION sta = mystation.staList[i];
+                QColor col;
+                if(legendType == 0)
+                    col.setRgb(redColor(sta.pga), greenColor(sta.pga), blueColor(sta.pga));
+                else if(legendType == 1)
+                    col = getGradientColorfromGal(sta.pga);
+                //col.setRgb(redColor(sta.pga), greenColor(sta.pga), blueColor(sta.pga));
+                QBrush brush = QBrush(col);
+                painter->setBrush(brush);
+                painter->drawEllipse(QPoint(sta.mapX, sta.mapY), 5, 5);
+            }
         }
     }
 
     painter->restore();
     painter->setPen(textPen);
     painter->setFont(textFont);
-    painter->drawText(QRect(500, 5, 300, 20), Qt::AlignRight, dataSrc.section(",", 0, 0));
-    painter->drawText(QRect(500, 25, 300, 20), Qt::AlignRight, dataSrc.section(",", 1, 1));
-    painter->drawText(QRect(500, 45, 300, 20), Qt::AlignRight, "Horizontal Channel");
+    painter->drawText(QRect(500, 5, 300, 25), Qt::AlignRight, dataSrc.section(",", 0, 0));
+    painter->drawText(QRect(500, 30, 300, 25), Qt::AlignRight, dataSrc.section(",", 1, 1));
+    painter->drawText(QRect(500, 55, 300, 25), Qt::AlignRight, chanS);
 }
 
 int Painter::redColor(float gal)
@@ -280,4 +394,57 @@ int Painter::blueColor(float gal)
       color = 255 ;
 
     return color ;
+}
+
+QColor Painter::getGradientColorfromGal(float value)
+{
+    //float pg = value / 980 * 100; // convert gal to %g
+    float pg = value;
+
+    QList<float> pgaRange;
+    //pgaRange << 0 << 0.1 << 0.3 << 0.5 << 2.4 << 6.7 << 13 << 24 << 44 << 83;
+    pgaRange << 0 << 0.98 << 2.94 << 4.90 << 23.52 << 65.66 << 127.40 << 235.20 << 431.20 << 813.40;
+    QList<QColor> pgaColor;
+    pgaColor << QColor("#FFFFFF") << QColor("#A5DDF9") << QColor("#92D050") << QColor("#FFFF00")
+             << QColor("#FFC000") << QColor("#FF0000") << QColor("#A32777") << QColor("#632523")
+             << QColor("#4C2600") << QColor("#000000");
+
+    int index;
+
+    for(int i=1;i<9;i++)
+    {
+        if(pg < 0.98)
+        {
+            index = 0;
+            break;
+        }
+        else if(pg > 813.40)
+        {
+            index = 9;
+            return pgaColor.at(index);
+            break;
+        }
+        else
+        {
+            if(pg >= pgaRange.at(i) && pg < pgaRange.at(i+1))
+            {
+                index = i;
+                break;
+            }
+        }
+    }
+
+    double k = pgaRange.at(index+1) - pgaRange.at(index);
+    double k2 = pgaRange.at(index+1) - pg;
+    float key = 100 - (k2 / k * 100); // get percent
+    float ratio = key / 100;
+
+    QColor startC = pgaColor.at(index + 1);
+    QColor endC = pgaColor.at(index);
+
+    int r = (int)(ratio*startC.red() + (1-ratio)*endC.red());
+    int g = (int)(ratio*startC.green() + (1-ratio)*endC.green());
+    int b = (int)(ratio*startC.blue() + (1-ratio)*endC.blue());
+
+    return QColor::fromRgb(r, g, b);
 }

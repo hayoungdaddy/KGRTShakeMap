@@ -18,9 +18,11 @@ MainWindow::MainWindow(QWidget *parent)
     recvPOINTMessage = new RecvMessage(this);
     connect(recvPOINTMessage, SIGNAL(sendPOINTSMessageToMainWindow(_BINARY_POINT_PACKET)),
             this, SLOT(rvPOINTSMessageFromThread(_BINARY_POINT_PACKET)));
+    connect(recvPOINTMessage, SIGNAL(sendSTATIONMessageToMainWindow(_BINARY_STATION_PACKET)),
+            this, SLOT(rvSTATIONMessageFromThread(_BINARY_STATION_PACKET)));
     if(!recvPOINTMessage->isRunning())
     {
-        recvPOINTMessage->setup(QUrl("ws://10.65.0.60:30920"));
+        recvPOINTMessage->setup(QUrl("ws://10.65.0.3:30920"));
         recvPOINTMessage->start();
     }
 
@@ -43,10 +45,113 @@ MainWindow::MainWindow(QWidget *parent)
     native = new Widget(&mypainter, this);
     ui->mapLO->addWidget(native);
 
-    dataSrc = "KISS 100SPS, Accelaration";
+    dataSrc = "KISS 100 Samples, Accelaration";
     native->setDataSrc(dataSrc);
 
     connect(ui->eventListCB, SIGNAL(currentIndexChanged(int)), this, SLOT(eventListCBChanged(int)));
+
+    monChanID = 3;
+    monChanCBChanged(3);
+    connect(ui->monChanCB, SIGNAL(currentIndexChanged(int)), this, SLOT(monChanCBChanged(int)));
+
+
+    dataTypeBG = new QButtonGroup(this);
+    dataTypeBG->addButton(ui->sTypeRB); dataTypeBG->setId(ui->sTypeRB, 0);
+    dataTypeBG->addButton(ui->cTypeRB); dataTypeBG->setId(ui->cTypeRB, 1);
+
+    legendTypeBG = new QButtonGroup(this);
+    legendTypeBG->addButton(ui->kigamLegendRB); legendTypeBG->setId(ui->kigamLegendRB, 0);
+    legendTypeBG->addButton(ui->kmaLegendRB); legendTypeBG->setId(ui->kmaLegendRB, 1);
+
+    ui->sTypeRB->setChecked(true);
+    ui->kigamLegendRB->setChecked(true);
+
+    connect(ui->sTypeRB, SIGNAL(clicked()), this, SLOT(dataTypeChanged()));
+    connect(ui->cTypeRB, SIGNAL(clicked()), this, SLOT(dataTypeChanged()));
+
+    dataType = 0;
+    dataTypeChanged();
+
+    connect(ui->kigamLegendRB, SIGNAL(clicked()), this, SLOT(legendTypeChanged()));
+    connect(ui->kmaLegendRB, SIGNAL(clicked()), this, SLOT(legendTypeChanged()));
+
+    legendType = 0;
+    legendTypeChanged();
+}
+
+void MainWindow::legendTypeChanged()
+{
+    if(ui->kigamLegendRB->isChecked())
+        legendType = 0;
+
+    if(ui->kmaLegendRB->isChecked())
+        legendType = 1;
+
+    native->setLegendType(legendType);
+
+    bool valid = timeCheck(dataTimeUTC);
+    if(valid)
+    {
+        recvEEWMessage->sendTextMessage(QString::number(dataTimeUTC.toTime_t()));
+        recvPOINTMessage->sendTextIncludeOptionMessage(QString::number(dataTimeUTC.toTime_t()));
+    }
+    else
+    {
+        _BINARY_POINT_PACKET pointpacket;
+        _BINARY_STATION_PACKET stationpacket;
+        pointpacket.dataTime = 0;
+        stationpacket.dataTime = 0;
+        native->animate(eewpacket, pointpacket, stationpacket);
+    }
+}
+
+void MainWindow::dataTypeChanged()
+{
+    if(ui->sTypeRB->isChecked())
+        dataType = 0;
+
+    if(ui->cTypeRB->isChecked())
+        dataType = 1;
+
+    native->setTypeID(dataType);
+    recvPOINTMessage->setDataType(dataType);
+
+    bool valid = timeCheck(dataTimeUTC);
+    if(valid)
+    {
+        recvEEWMessage->sendTextMessage(QString::number(dataTimeUTC.toTime_t()));
+        recvPOINTMessage->sendTextIncludeOptionMessage(QString::number(dataTimeUTC.toTime_t()));
+    }
+    else
+    {
+        _BINARY_POINT_PACKET pointpacket;
+        _BINARY_STATION_PACKET stationpacket;
+        pointpacket.dataTime = 0;
+        stationpacket.dataTime = 0;
+        native->animate(eewpacket, pointpacket, stationpacket);
+    }
+}
+
+void MainWindow::monChanCBChanged(int chanIndex)
+{
+    monChanID = chanIndex;
+    native->setChanID(monChanID);
+    recvPOINTMessage->setChanID(monChanID);
+
+    bool valid = timeCheck(dataTimeUTC);
+    if(valid)
+    {
+        recvEEWMessage->sendTextMessage(QString::number(dataTimeUTC.toTime_t()));
+        recvPOINTMessage->sendTextIncludeOptionMessage(QString::number(dataTimeUTC.toTime_t()));
+    }
+    else
+    {
+        _BINARY_POINT_PACKET pointpacket;
+        _BINARY_STATION_PACKET stationpacket;
+        pointpacket.dataTime = 0;
+        stationpacket.dataTime = 0;
+        native->animate(eewpacket, pointpacket, stationpacket);
+    }
 }
 
 MainWindow::~MainWindow()
@@ -106,38 +211,38 @@ void MainWindow::currentPBClicked()
     playPBClicked();
 }
 
-void MainWindow::setDialAndLCD(QDateTime time)
+void MainWindow::setDialAndLCD(QDateTime dtUTC)
 {
-    ui->dataTimeLCD->display(time.toString("yy-MM-dd hh:mm:ss"));
+    ui->dataTimeLCD->display(dtUTC.toString("yy-MM-dd hh:mm:ss"));
 
-    QDateTime dateTime = QDateTime::currentDateTimeUtc();
+    QDateTime nowUTC = QDateTime::currentDateTimeUtc();
 
-    if(dateTime.date() == time.date())
+    if(dtUTC.date() == nowUTC.date())
         ui->dateDial->setValue(1);
     else
         ui->dateDial->setValue(0);
-    ui->hourDial->setValue(time.time().hour());
-    ui->minDial->setValue(time.time().minute());
-    ui->secDial->setValue(time.time().second());
+    ui->hourDial->setValue(dtUTC.time().hour());
+    ui->minDial->setValue(dtUTC.time().minute());
+    ui->secDial->setValue(dtUTC.time().second());
 }
 
 QDateTime MainWindow::findDataTimeUTC()
 {
-    QDateTime time;
-    time.setTimeSpec(Qt::UTC);
+    QDateTime dtUTC;
+    dtUTC.setTimeSpec(Qt::UTC);
     if(ui->dateDial->value() == 1)
-        time.setDate(QDate::currentDate());
+        dtUTC = QDateTime::currentDateTimeUtc();
     else
-        time.setDate(QDate::currentDate().addDays(-1));
+        dtUTC = QDateTime::currentDateTimeUtc().addDays(-1);
 
     int hour = ui->hourDial->value();
     int min = ui->minDial->value();
     int sec = ui->secDial->value();
 
     QTime t; t.setHMS(hour, min, sec);
-    time.setTime(t);
+    dtUTC.setTime(t);
 
-    return time;
+    return dtUTC;
 }
 
 void MainWindow::dDialChanged(int date)
@@ -145,15 +250,15 @@ void MainWindow::dDialChanged(int date)
     if(isNowPlayMode)
         return;
 
-    QDateTime today;
+    QDateTime nowUTC;
 
     if(date == 1)
-        today = QDateTime::currentDateTimeUtc();
+        nowUTC = QDateTime::currentDateTimeUtc();
     else
-        today = QDateTime::currentDateTimeUtc().addDays(-1);
+        nowUTC = QDateTime::currentDateTimeUtc().addDays(-1);
 
     if(isStopMode)
-        ui->dateLB->setText(today.toString("MM-dd"));
+        ui->dateLB->setText(nowUTC.toString("MM-dd"));
 }
 
 void MainWindow::hDialChanged(int hour)
@@ -223,13 +328,15 @@ void MainWindow::doRepeatWork()
     if(valid)
     {
         recvEEWMessage->sendTextMessage(QString::number(dataTimeUTC.toTime_t()));
-        recvPOINTMessage->sendTextMessage(QString::number(dataTimeUTC.toTime_t()));
+        recvPOINTMessage->sendTextIncludeOptionMessage(QString::number(dataTimeUTC.toTime_t()));
     }
     else
     {
-        _BINARY_POINT_PACKET packet;
-        packet.dataTime = 0;
-        native->animate(eewpacket, packet);
+        _BINARY_POINT_PACKET pointpacket;
+        _BINARY_STATION_PACKET stationpacket;
+        pointpacket.dataTime = 0;
+        stationpacket.dataTime = 0;
+        native->animate(eewpacket, pointpacket, stationpacket);
     }
 }
 
@@ -274,8 +381,16 @@ void MainWindow::rvEEWMessageFromThread(_BINARY_EEW_PACKET packet)
     ui->eventListCB->addItems(events);
 }
 
-void MainWindow::rvPOINTSMessageFromThread(_BINARY_POINT_PACKET packet)
+void MainWindow::rvPOINTSMessageFromThread(_BINARY_POINT_PACKET pointpacket)
 {
-    //ui->numStaLCD->display(QString::number(packet.numPGAsta));
-    native->animate(eewpacket, packet);
+    _BINARY_STATION_PACKET stationpacket;
+    stationpacket.dataTime = 0;
+    native->animate(eewpacket, pointpacket, stationpacket);
+}
+
+void MainWindow::rvSTATIONMessageFromThread(_BINARY_STATION_PACKET stationpacket)
+{
+    _BINARY_POINT_PACKET pointpacket;
+    pointpacket.dataTime = 0;
+    native->animate(eewpacket, pointpacket, stationpacket);
 }

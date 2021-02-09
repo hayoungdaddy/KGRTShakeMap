@@ -65,12 +65,16 @@ public:
     Painter();
 
 public:
-    void paint(QPainter *painter, QPaintEvent *event, _BINARY_EEW_PACKET myeewp, _BINARY_POINT_PACKET mypoint);
+    void paint(QPainter *painter, QPaintEvent *event,
+               _BINARY_EEW_PACKET myeewp, _BINARY_POINT_PACKET mypoint, _BINARY_STATION_PACKET mystation);
 
     QString dataSrc;
 
     QList<_POINT> points;
     void initPoints();
+    int chanID;
+    int dataType;
+    int legendType;
 
 private:
     QFont textFont;
@@ -82,10 +86,12 @@ private:
     bool isEvent;
 
     QList<float> maxMapZ;
+    QList<_STATION> maxPGAList;
 
     int redColor(float);
     int greenColor(float);
     int blueColor(float);
+    QColor getGradientColorfromGal(float);
 };
 
 #endif

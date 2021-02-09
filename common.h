@@ -16,6 +16,7 @@
 #define SECNODS_FOR_ALIGN_QSCD 10
 #define PI 3.14159265358979323846
 #define DATA_DURATION 43200
+#define MAX_NUM_STATION 300
 
 #define MAX_NUM_EVENT 20
 
@@ -36,14 +37,12 @@ typedef struct _station
 {
     int index;
     char netsta[STA_LEN];
-    char staType;
     float lat;
     float lon;
     int mapX;
     int mapY;
-    int inUse;
     int lastPGATime;
-    float lastPGA[5];
+    float pga;
 } _STATION;
 
 typedef struct _event
@@ -56,6 +55,13 @@ typedef struct _event
     int mapY;
     float mag;
 } _EVENT;
+
+typedef struct _binary_station_packet
+{
+    int numPGAsta;
+    int dataTime;
+    _STATION staList[MAX_NUM_STATION];
+} _BINARY_STATION_PACKET;
 
 typedef struct _binary_point_packet
 {

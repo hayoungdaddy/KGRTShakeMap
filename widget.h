@@ -65,9 +65,15 @@ public:
 
     QString dataSrc;
     void setDataSrc(QString);
+    int chanID;
+    void setChanID(int);
+    int dataTypeID;
+    void setTypeID(int);
+    int legendTypeID;
+    void setLegendType(int);
 
 public slots:
-    void animate(_BINARY_EEW_PACKET, _BINARY_POINT_PACKET);
+    void animate(_BINARY_EEW_PACKET, _BINARY_POINT_PACKET, _BINARY_STATION_PACKET);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -76,6 +82,7 @@ private:
     Painter *mypainter;
     _BINARY_EEW_PACKET myeewpacket;
     _BINARY_POINT_PACKET mypointpacket;
+    _BINARY_STATION_PACKET mystationpacket;
 };
 
 #endif

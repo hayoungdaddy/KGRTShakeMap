@@ -65,10 +65,29 @@ void Widget::setDataSrc(QString src)
     mypainter->dataSrc = dataSrc;
 }
 
-void Widget::animate(_BINARY_EEW_PACKET eewpacket, _BINARY_POINT_PACKET pointpacket)
+void Widget::setChanID(int chan)
+{
+    chanID = chan;
+    mypainter->chanID = chanID;
+}
+
+void Widget::setTypeID(int type)
+{
+    dataTypeID = type;
+    mypainter->dataType = dataTypeID;
+}
+
+void Widget::setLegendType(int type)
+{
+    legendTypeID = type;
+    mypainter->legendType = legendTypeID;
+}
+
+void Widget::animate(_BINARY_EEW_PACKET eewpacket, _BINARY_POINT_PACKET pointpacket, _BINARY_STATION_PACKET stationpacket)
 {
     myeewpacket = eewpacket;
     mypointpacket = pointpacket;
+    mystationpacket = stationpacket;
     update();
 }
 
@@ -77,6 +96,6 @@ void Widget::paintEvent(QPaintEvent *event)
     QPainter painter;
     painter.begin(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    mypainter->paint(&painter, event, myeewpacket, mypointpacket);
+    mypainter->paint(&painter, event, myeewpacket, mypointpacket, mystationpacket);
     painter.end();
 }

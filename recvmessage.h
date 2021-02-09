@@ -17,6 +17,11 @@ public:
     void setup(QUrl);
     void cleanUp();
     void sendTextMessage(QString);
+    void sendTextIncludeOptionMessage(QString);
+    int chanID;
+    int dataType;
+    void setChanID(int);
+    void setDataType(int);
 
 private:
     QWebSocket m_webSocket;
@@ -30,6 +35,7 @@ private slots:
 signals:
     void sendPOINTSMessageToMainWindow(_BINARY_POINT_PACKET);
     void sendEEWMessageToMainWindow(_BINARY_EEW_PACKET);
+    void sendSTATIONMessageToMainWindow(_BINARY_STATION_PACKET);
 };
 
 #endif // RECVMESSAGE_H

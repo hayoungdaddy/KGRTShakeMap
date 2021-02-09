@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QtWebSockets/QtWebSockets>
+#include <QButtonGroup>
 
 #include <QTimer>
 
@@ -43,11 +44,16 @@ private:
     Widget *native;
 
     QString dataSrc;
+    int monChanID;
+    int dataType;
+    int legendType;
 
+    QButtonGroup *dataTypeBG, *legendTypeBG;
 
 private slots:
     void rvEEWMessageFromThread(_BINARY_EEW_PACKET);
     void rvPOINTSMessageFromThread(_BINARY_POINT_PACKET);
+    void rvSTATIONMessageFromThread(_BINARY_STATION_PACKET);
 
     void doRepeatWork();
     void stopPBClicked();
@@ -62,5 +68,9 @@ private slots:
     void sDialChanged(int);
 
     void eventListCBChanged(int);
+    void monChanCBChanged(int);
+
+    void dataTypeChanged();
+    void legendTypeChanged();
 };
 #endif // MAINWINDOW_H
