@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
             this, SLOT(rvSTATIONMessageFromThread(_BINARY_STATION_PACKET)));
     if(!recvPOINTMessage->isRunning())
     {
-        recvPOINTMessage->setup(QUrl("ws://10.65.0.3:30920"));
+        recvPOINTMessage->setup(QUrl("ws://10.65.0.60:30920"));
         recvPOINTMessage->start();
     }
 
@@ -336,6 +336,7 @@ void MainWindow::doRepeatWork()
         _BINARY_STATION_PACKET stationpacket;
         pointpacket.dataTime = 0;
         stationpacket.dataTime = 0;
+        stationpacket.numPGAsta = 0;
         native->animate(eewpacket, pointpacket, stationpacket);
     }
 }

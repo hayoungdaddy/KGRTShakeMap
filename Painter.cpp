@@ -85,11 +85,11 @@ void Painter::paint(QPainter *painter, QPaintEvent *event,
                     _BINARY_EEW_PACKET myeewp, _BINARY_POINT_PACKET mypoint, _BINARY_STATION_PACKET mystation)
 {
     QString chanS;
-    if(chanID == 0) chanS = "East/West Channel";
-    else if(chanID == 1) chanS = "North/South Channel";
-    else if(chanID == 2) chanS = "Up/Down Channel";
-    else if(chanID == 3) chanS = "Horizontal Channel";
-    else if(chanID == 4) chanS = "Total(3D) Channel";
+    if(chanID == 0) chanS = "East/West PGA";
+    else if(chanID == 1) chanS = "North/South PGA";
+    else if(chanID == 2) chanS = "Up/Down PGA";
+    else if(chanID == 3) chanS = "Horizontal PGA";
+    else if(chanID == 4) chanS = "Total(3-Axis) PGA";
 
     isEvent = false;
 
@@ -262,33 +262,53 @@ void Painter::paint(QPainter *painter, QPaintEvent *event,
 
         if(dataType == 0)
         {
-            for(int i=0;i<LANDXYCNT;i++)
+            if(mypoint.dataTime != 0)
             {
-                QColor col;
-                if(legendType == 0)
-                    col.setRgb(redColor(mypoint.mapZ[i]), greenColor(mypoint.mapZ[i]), blueColor(mypoint.mapZ[i]));
-                else if(legendType == 1)
-                    col = getGradientColorfromGal(mypoint.mapZ[i]);
-                //col.setRgb(redColor(mypoint.mapZ[i]), greenColor(mypoint.mapZ[i]), blueColor(mypoint.mapZ[i]));
-                QPen pen = QPen(col);
-                painter->setPen(pen);
-                painter->drawPoint(QPoint(points.at(i).landX, points.at(i).landY));
+                for(int i=0;i<LANDXYCNT;i++)
+                {
+                    QColor col;
+                    if(legendType == 0)
+                        col.setRgb(redColor(mypoint.mapZ[i]), greenColor(mypoint.mapZ[i]), blueColor(mypoint.mapZ[i]));
+                    else if(legendType == 1)
+                        col = getGradientColorfromGal(mypoint.mapZ[i]);
+                    //col.setRgb(redColor(mypoint.mapZ[i]), greenColor(mypoint.mapZ[i]), blueColor(mypoint.mapZ[i]));
+                    QPen pen = QPen(col);
+                    painter->setPen(pen);
+                    painter->drawPoint(QPoint(points.at(i).landX, points.at(i).landY));
+                }
+            }
+            else
+            {
+                painter->setPen(textPen);
+                painter->setFont(textFont);
+                painter->drawText(QRect(0, IMAGE_Y_HEIGHT/2 - 50, IMAGE_X_WIDTH, 25),
+                                  Qt::AlignCenter, "There is no available data");
             }
         }
         else if(dataType == 1)
         {
-            for(int i=0;i<mystation.numPGAsta;i++)
+            if(mystation.dataTime != 0)
             {
-                _STATION sta = mystation.staList[i];
-                QColor col;
-                if(legendType == 0)
-                    col.setRgb(redColor(sta.pga), greenColor(sta.pga), blueColor(sta.pga));
-                else if(legendType == 1)
-                    col = getGradientColorfromGal(sta.pga);
-                //col.setRgb(redColor(sta.pga), greenColor(sta.pga), blueColor(sta.pga));
-                QBrush brush = QBrush(col);
-                painter->setBrush(brush);
-                painter->drawEllipse(QPoint(sta.mapX, sta.mapY), 5, 5);
+                for(int i=0;i<mystation.numPGAsta;i++)
+                {
+                    _STATION sta = mystation.staList[i];
+                    QColor col;
+                    if(legendType == 0)
+                        col.setRgb(redColor(sta.pga), greenColor(sta.pga), blueColor(sta.pga));
+                    else if(legendType == 1)
+                        col = getGradientColorfromGal(sta.pga);
+                    //col.setRgb(redColor(sta.pga), greenColor(sta.pga), blueColor(sta.pga));
+                    QBrush brush = QBrush(col);
+                    painter->setBrush(brush);
+                    painter->drawEllipse(QPoint(sta.mapX, sta.mapY), 5, 5);
+                }
+            }
+            else
+            {
+                painter->setPen(textPen);
+                painter->setFont(textFont);
+                painter->drawText(QRect(0, IMAGE_Y_HEIGHT/2 - 50, IMAGE_X_WIDTH, 25),
+                                  Qt::AlignCenter, "There is no available data");
             }
         }
     }

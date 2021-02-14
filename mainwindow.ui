@@ -832,7 +832,7 @@ color:rgb(255, 255, 255);
              <string notr="true">background-color: rgb(238, 238, 236);</string>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>0</number>
             </property>
             <item>
              <property name="text">
@@ -856,7 +856,7 @@ color:rgb(255, 255, 255);
             </item>
             <item>
              <property name="text">
-              <string>Total (3D)</string>
+              <string>Total(3-Axis)</string>
              </property>
             </item>
            </widget>
