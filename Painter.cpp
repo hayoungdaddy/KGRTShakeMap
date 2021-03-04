@@ -271,7 +271,6 @@ void Painter::paint(QPainter *painter, QPaintEvent *event,
                         col.setRgb(redColor(mypoint.mapZ[i]), greenColor(mypoint.mapZ[i]), blueColor(mypoint.mapZ[i]));
                     else if(legendType == 1)
                         col = getGradientColorfromGal(mypoint.mapZ[i]);
-                    //col.setRgb(redColor(mypoint.mapZ[i]), greenColor(mypoint.mapZ[i]), blueColor(mypoint.mapZ[i]));
                     QPen pen = QPen(col);
                     painter->setPen(pen);
                     painter->drawPoint(QPoint(points.at(i).landX, points.at(i).landY));
