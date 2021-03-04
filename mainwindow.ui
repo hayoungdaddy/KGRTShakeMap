@@ -168,7 +168,7 @@ color:rgb(255, 255, 255);
                    <enum>QFrame::StyledPanel</enum>
                   </property>
                   <property name="text">
-                   <string>DATA TIME (UTC)</string>
+                   <string>DATA TIME (KST)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>
@@ -412,6 +412,21 @@ color:rgb(255, 255, 255);
               <number>0</number>
              </property>
              <item>
+              <widget class="QPushButton" name="realtimePB">
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: rgb(238, 238, 236);</string>
+               </property>
+               <property name="text">
+                <string>REALTIME</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QPushButton" name="playPB">
                <property name="font">
                 <font>
@@ -422,7 +437,7 @@ color:rgb(255, 255, 255);
                 <string notr="true">background-color: rgb(238, 238, 236);</string>
                </property>
                <property name="text">
-                <string>PLAY</string>
+                <string>REPLAY</string>
                </property>
               </widget>
              </item>
@@ -438,21 +453,6 @@ color:rgb(255, 255, 255);
                </property>
                <property name="text">
                 <string>STOP</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="currentPB">
-               <property name="font">
-                <font>
-                 <pointsize>10</pointsize>
-                </font>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">background-color: rgb(238, 238, 236);</string>
-               </property>
-               <property name="text">
-                <string>REALTIME</string>
                </property>
               </widget>
              </item>

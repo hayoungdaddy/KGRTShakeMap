@@ -6,12 +6,12 @@
 #include <QThread>
 #include <QtWebSockets/QtWebSockets>
 
-class RecvMessage : public QThread
+class RecvWSMessage : public QThread
 {
     Q_OBJECT
 public:
-    RecvMessage(QWidget *parent = nullptr);
-    ~RecvMessage();
+    RecvWSMessage(QWidget *parent = nullptr);
+    ~RecvWSMessage();
 
 public:
     void setup(QUrl);
@@ -34,8 +34,9 @@ private slots:
 
 signals:
     void sendPOINTSMessageToMainWindow(_BINARY_POINT_PACKET);
-    void sendEEWMessageToMainWindow(_BINARY_EEW_PACKET);
-    void sendSTATIONMessageToMainWindow(_BINARY_STATION_PACKET);
+    void sendEEWMessageToMainWindow(_BINARY_SMALL_EEWLIST_PACKET);
+    void sendSTATIONMessageToMainWindow(_BINARY_PGA_PACKET);
+    void sendTIMEMessageToMainWindow(int);
 };
 
 #endif // RECVMESSAGE_H

@@ -66,7 +66,7 @@ public:
 
 public:
     void paint(QPainter *painter, QPaintEvent *event,
-               _BINARY_EEW_PACKET myeewp, _BINARY_POINT_PACKET mypoint, _BINARY_STATION_PACKET mystation);
+               _BINARY_SMALL_EEWLIST_PACKET myeewp, _BINARY_POINT_PACKET mypoint, _BINARY_PGA_PACKET mystation);
 
     QString dataSrc;
 
@@ -82,7 +82,7 @@ private:
     QPen textPen;
     QImage backImage;
 
-    _EVENT _event;
+    _EEWINFO _eewInfo;
     bool isEvent;
 
     QList<float> maxMapZ;

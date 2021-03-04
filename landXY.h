@@ -1,6 +1,6 @@
 #include "common.h"
 
-int landXY[LANDXYCNT][2] = {
+int landXY[LANDXYCNT_VERSION_1][2] = {
 {  13  , 121 }, 
 {  13  , 122 }, 
 {  13  , 123 }, 

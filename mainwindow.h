@@ -27,16 +27,17 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    RecvMessage *recvPOINTMessage;
-    RecvMessage *recvEEWMessage;
+    RecvWSMessage *recvPOINTMessage;
+    RecvWSMessage *recvEEWMessage;
+    RecvWSMessage *recvTIMEMessage;
 
     QTimer *systemTimer;
-    QDateTime dataTimeUTC;
+    QDateTime serverTimeUtc;
+    QDateTime dataTimeKST;
 
-    _BINARY_EEW_PACKET eewpacket;
-    _BINARY_POINT_PACKET pointpacket;
+    _BINARY_SMALL_EEWLIST_PACKET eewpacket;
 
-    bool isNowPlayMode;
+    bool isRealTimeMode;
     bool isStopMode;
     bool timeCheck(QDateTime);
 
@@ -51,16 +52,17 @@ private:
     QButtonGroup *dataTypeBG, *legendTypeBG;
 
 private slots:
-    void rvEEWMessageFromThread(_BINARY_EEW_PACKET);
+    void rvTIMEMessageFromThread(int);
+    void rvEEWMessageFromThread(_BINARY_SMALL_EEWLIST_PACKET);
     void rvPOINTSMessageFromThread(_BINARY_POINT_PACKET);
-    void rvSTATIONMessageFromThread(_BINARY_STATION_PACKET);
+    void rvSTATIONMessageFromThread(_BINARY_PGA_PACKET);
 
     void doRepeatWork();
     void stopPBClicked();
     void playPBClicked();
-    void currentPBClicked();
-    void setDialAndLCD(QDateTime);
-    QDateTime findDataTimeUTC();
+    void realtimePBClicked();
+    void setDialAndLCDUsingKST(QDateTime);
+    QDateTime findDataTimeKSTFromDial();
 
     void dDialChanged(int);
     void hDialChanged(int);
